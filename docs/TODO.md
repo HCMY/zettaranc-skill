@@ -7,6 +7,39 @@
 
 ---
 
+## 📌 待发版：v4.3.1（代码已推送，尚未打 tag）
+
+**当前状态**（2026-09-12）：
+
+| 项 | 状态 |
+|---|---|
+| 代码推送到 `origin/main` | ✅ `d4c5d71` |
+| 四处版本号 = 4.3.1 | ✅ 已提交 |
+| `docs/CHANGELOG.md` v4.3.1 段 | ✅ 已写好 |
+| **git tag `v4.3.1`** | ❌ **未打** |
+| **发布到 PyPI / GitHub Release / ClawHub** | ❌ **未发** |
+
+**发版时执行**（推送 tag 会触发 `release.yml` 自动发布，**不可逆**）：
+
+```bash
+# 前置检查
+python scripts/check_version_consistency.py     # 四处版本号一致
+pytest tests/ -q                                 # 测试通过
+
+# 发版
+git tag v4.3.1
+git push origin v4.3.1        # ← 触发 release workflow
+```
+
+**注意事项**：
+
+- 打 tag 前确认 PyPI 上 `4.3.1` 未被占用（release.yml 上传失败会导致流程中断）
+- 若暂不发版期间又有新提交，那些提交会归入「未发布的 v4.3.1」——
+  发版时应把 tag 打在**确认稳定**的那个 commit 上，而非当前 main 顶端
+- tag 一旦推送，PyPI 上的版本号不可复用（删了也不能重传同名版本）
+
+---
+
 ## P0 · SQLite 并发写锁冲突（当前正在发生）
 
 ### 现象
