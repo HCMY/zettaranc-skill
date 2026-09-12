@@ -652,14 +652,14 @@ cp .env.example .env
 
 ```ini
 DATA_MODE=jnb
-TUSHARE_TOKEN=你的56位token
-TUSHARE_API_URL=中转API地址
+TUSHARE_TOKEN=你的token
+TUSHARE_API_URL=https://api.waditu.com/dataapi
 ```
 
 > [!NOTE]
 > * **数据模式**：`DATA_MODE=jnb` 时配置 Tushare Token 和 API URL 数据最全；未配置时自动走 a-stock-data 免费源（v4.1.0 新增）；`DATA_MODE=websearch` 时可留空。
 > * **Token 获取**：前往 [Tushare 官网](https://tushare.pro/user/token) 注册获取 Token。
-> * **中转 API**：可使用中转服务商提供的代理地址。
+> * **中转 API**：`TUSHARE_API_URL` 是**基础路径**，SDK 会自动追加 `/{接口名}`（如 `/daily`）。推荐使用 `https://api.waditu.com/dataapi`（官方运营中转）。**不能填** `https://api.tushare.pro`——官方端点只接受根路径 POST，被追加路径后返回 404。详见 `docs/CONFIG_GUIDE.md`。
 > * **LLM 配置**：可选。配置 `LLM_API_KEY` 等参数后可启用小万 LLM 对话及点评功能；未配置时将仅输出命令行分析及意图路由。
 > * **向量知识库**：默认关闭，设置 `KB_ENABLED=true` 并配置对应服务后可开启本地 RAG 知识检索。
 > * **bridge 中转**：`TUSHARE_BRIDGE_ENABLED=auto/always/never` 控制 tushare-data-bridge HTTP 缓存代理（v3.2.0 新增）。

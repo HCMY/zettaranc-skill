@@ -2,6 +2,31 @@
 
 所有值得记录的变更都会写在这里。格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。
 
+## v4.3.1 (2026-09-12) — 数据同步稳定性修复与文档补全
+
+### Fixed
+
+- **批量指标同步约 12% 失败 `database is locked`**：`modules/database.py::get_db_connection()` 未设置 `busy_timeout`，沿用 Python `sqlite3.connect()` 默认的 5 秒；而 5 线程（`_MAX_SYNC_WORKERS=5`）并发写 `indicator_cache` 时锁等待实测最长达 24 秒，超时即失败 → 在 `get_db_connection()` 统一 `PRAGMA busy_timeout=30000`（连接级设置，放此处以覆盖 `_save_indicator_cache` 等直连路径）。
+  - 实测（独立测试库，5 线程 × 60 只 × 120 天）：默认 5s → 失败 7/60；30s → 失败 0/60。
+  - 生产补跑验证：579 只缺漏股票全部成功，0 次锁冲突。
+  - 排查过程中两条**已排除**的推断留档于 `docs/TODO.md`：① 误认为 SQLite 默认不等待（实为 5 秒）；② 曾提议缩小事务范围（实测更慢且无效：825ms vs 403ms）。
+- **Tushare 配置文档指向失效地址**：`TUSHARE_API_URL` 的示例 `https://tt.xiaodefa.cn` 需该服务专用 token，不接受官方 token，用户配置后报 `40101`；且未说明该变量是「基础路径」——tushare SDK 会自动追加 `/{接口名}`（见 `tushare/pro/client.py:42`），因此官方端点 `https://api.tushare.pro` 会被拼成 `/daily` 而返回 404 → 文档统一改为 `https://api.waditu.com/dataapi`（官方运营中转，路径式，接受官方 token），并在 `.env.example`、`docs/CONFIG_GUIDE.md`、`docs/USER_GUIDE.md`、`README.md`、`SKILL.md` 补充该约束说明；`modules/tushare_client.py` 的 `CONFIG_MISSING` 报错信息改为可直接照抄的正确示例。
+- **文档误述 Tushare Token 为「56 位」**：无依据（实测长度不固定），移除各处位数描述。
+
+### Changed
+
+- `modules/tushare_client.py` 模块 docstring 补充 `TUSHARE_API_URL` 的语义与选型约束。
+- 版本号统一升至 **4.3.1**（此前 `pyproject.toml` / `skill.json` 为 4.3.0 而 `SKILL.md` 为 4.2.0，四处失配）。
+
+### Added
+
+- 新增 `docs/DATABASE_SCHEMA.md`：15 张表 / 27 个索引的完整字段说明、用途、写入时机与数据流向图。
+- 新增 `docs/TODO.md`：待优化项清单（含本次 SQLite 写锁问题的完整排查记录与已排除推断）。
+- 新增 `docs/architecture.html`：项目架构、模块组件与运行流程可视化说明。
+- 新增 `scripts/check_version_consistency.py`：校验 `pyproject.toml` / `skill.json` / `SKILL.md` / `docs/CHANGELOG.md` 四处版本号一致（不一致退出码 1），并已挂到 `.pre-commit-config.yaml`，发版漏改即被拦截。
+- 新增 `tests/test_indicator_cache_integrity.py`：指标缓存的完整性与正确性校验，三个层次 —— 完整性（覆盖度/条数/无重复）、值域合法性（RSI 0-100、BOLL 三轨有序、无 NaN）、正确性（同实现重算对拍 + MA5/收盘价独立计算 + KDJ/MACD/BOLL 数学恒等式）。生产库全量校验部分以 `realdata` + `slow` 标记，需 `RUN_REALDATA=true`。
+  - 已用变异测试验证有效性：注入 `j+1`、`ma5/ma10 互换`、`boll_mid→boll_upper` 三类缺陷均被捕获。其中 `j+1` 最初逃过了「同实现重算对拍」（因两边同步出错形成自证循环），由此补入数学恒等式用例——这是本测试的关键设计点。
+
 ## v4.3.0 (2026-08-29) — 量化稳定性与效率提升 + 市场择时/指数同步
 
 ### 新增
