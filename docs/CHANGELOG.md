@@ -24,6 +24,7 @@
 - 新增 `docs/TODO.md`：待优化项清单（含本次 SQLite 写锁问题的完整排查记录与已排除推断）。
 - 新增 `docs/architecture.html`：项目架构、模块组件与运行流程可视化说明。
 - 新增 `scripts/check_version_consistency.py`：校验 `pyproject.toml` / `skill.json` / `SKILL.md` / `docs/CHANGELOG.md` 四处版本号一致（不一致退出码 1），并已挂到 `.pre-commit-config.yaml`，发版漏改即被拦截。
+- 新增 `docs/STRATEGY_FORMULAS.md`：14 种选股策略的公式与参数全解，**从源码逐行提取**而非摘抄文档。含：各策略判定条件与代码行号、6 个可运行时覆盖的参数（`get_active_param`）及其默认值、三级参数可改性分级（运行时可改 / 配置可改 / 改代码可改）、基础指标公式、沙漏五因子与量比六场景完整阈值、硬过滤器、参数修改指南。附「代码与文档差异」清单（如 B1 的涨幅/振幅/换手率三项文档有而代码未实现；SB1 缩量企稳计算但未参与过滤；娜娜/异动地量等复合战法未注册到选股注册表）。
 - 新增 `tests/test_indicator_cache_integrity.py`：指标缓存的完整性与正确性校验，三个层次 —— 完整性（覆盖度/条数/无重复）、值域合法性（RSI 0-100、BOLL 三轨有序、无 NaN）、正确性（同实现重算对拍 + MA5/收盘价独立计算 + KDJ/MACD/BOLL 数学恒等式）。生产库全量校验部分以 `realdata` + `slow` 标记，需 `RUN_REALDATA=true`。
   - 已用变异测试验证有效性：注入 `j+1`、`ma5/ma10 互换`、`boll_mid→boll_upper` 三类缺陷均被捕获。其中 `j+1` 最初逃过了「同实现重算对拍」（因两边同步出错形成自证循环），由此补入数学恒等式用例——这是本测试的关键设计点。
 
